@@ -1,6 +1,6 @@
 # Common Hardware Module Drivers by 1V/Oct
 
-## Modiules
+## Modules
 - UART (currently STM32)
 - Switches + Encoders
 - GPIO
