@@ -1,4 +1,4 @@
-# Commong Hardware Module Drivers by 1V/Oct
+# Common Hardware Module Drivers by 1V/Oct
 
 ## Modiules
 - UART (currently STM32)
