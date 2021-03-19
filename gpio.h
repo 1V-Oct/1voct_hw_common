@@ -8,7 +8,8 @@ inline uint8_t gpio_read_pin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin) {
 }
 
 inline void gpio_reset_pin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin) {
-  GPIOx->BRR = GPIO_Pin;
+  // GPIOx->BRR = GPIO_Pin;
+  GPIOx->BSRR = (uint32_t)GPIO_Pin << 16;
 }
 
 inline void gpio_set_pin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin) {
@@ -51,11 +52,11 @@ inline void gpio_init(GPIO_TypeDef *GPIOx, const uint16_t pin_no, uint16_t confi
     
   // }
   // GPIOx
-  if (pin_no >= 8) {
-    GPIOx->CRL = config << pin_no;
-  } else {
-    GPIOx->CRH = config << (pin_no - 8);
-  }
+  // if (pin_no >= 8) {
+  //   GPIOx->CRL = config << pin_no;
+  // } else {
+  //   GPIOx->CRH = config << (pin_no - 8);
+  // }
 }
 
 // inline void gpio_inp_pullup(GPIO_TypeDef *GPIOx, GPIO_Pin uint8_t pull) {
