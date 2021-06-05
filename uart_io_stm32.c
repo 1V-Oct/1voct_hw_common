@@ -109,7 +109,7 @@ void               uart_puts(const char *buf) {
 
 void uart_printf(const char *fmt, ...) {
   char    buf[400];
-  va_list args;
+  __builtin_va_list args;
   va_start(args, fmt);
   vo_vsprintf(buf, fmt, args);
   va_end(args);
