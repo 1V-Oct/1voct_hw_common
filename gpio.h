@@ -42,7 +42,20 @@ These bits are written by software to configure the corresponding I/O port. Refe
 01: Output mode, max speed 10 MHz.
 10: Output mode, max speed 2 MHz.
 11: Output mode, max speed 50 MHz.
+
+
+  // to toggle 
+  GPIOA -> ODR ^= (1 << pinNummer);
+  // to set 
+  GPIOA -> BSRR = (1 << pinNummer);
+  // to reset 
+  GPIOA -> BRR = (1 << pinNummer);
+  // or
+  GPIOA -> BSRR = (1 << (pinNummer + 16));
 */
+
+
+
 
 #define GPIO_CONFIG(MODE,CNF) (((CNF) << 2) | (MODE))
 
@@ -51,11 +64,25 @@ inline void gpio_init(GPIO_TypeDef *GPIOx, const uint16_t pin_no, uint16_t confi
     
   // }
   // GPIOx
+  volatile uint32_t *base;
+  uint16_t pin;
+
   if (pin_no >= 8) {
-    GPIOx->CRL = config << pin_no;
+    base = &GPIOx->CRH;
+    pin = pin_no - 8;
   } else {
-    GPIOx->CRH = config << (pin_no - 8);
+    base = &GPIOx->CRL;
+    pin = pin_no;
   }
+  pin = pin << 2; // multiply pib by 4;
+  *base &= 0b1111 << pin;
+  *base |= config << pin;
+
+  // if (pin_no >= 8) {
+  //   GPIOx->CRL |= config << pin_no;
+  // } else {
+  //   GPIOx->CRH = config << (pin_no - 8);
+  // }
 }
 
 // inline void gpio_inp_pullup(GPIO_TypeDef *GPIOx, GPIO_Pin uint8_t pull) {
