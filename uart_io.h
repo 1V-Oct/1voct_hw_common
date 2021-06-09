@@ -1,9 +1,8 @@
 #pragma once
 #include "app_config.h"
 
-#ifdef __cplusplus
- extern "C" {
-#endif
+
+__CEXTERN_START
 
 typedef void (*uart_rx_cb_t)(uint8_t c);
 
@@ -14,6 +13,6 @@ void uart_tx(uint8_t c);
 void uart_puts(const char *buf);
 void uart_printf(const char* fmt, ...);
 void uart_it(void);
-#ifdef __cplusplus
-}
-#endif
+
+__CEXTERN_END
+
