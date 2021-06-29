@@ -8,7 +8,11 @@ inline uint8_t gpio_read_pin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin) {
 }
 
 inline void gpio_reset_pin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin) {
+#if defined(STM32F103xB)
   GPIOx->BRR = GPIO_Pin;
+#else
+  GPIOx->BSRR = (uint32_t)GPIO_Pin << 16;
+#endif
 }
 
 inline void gpio_set_pin(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin) {
