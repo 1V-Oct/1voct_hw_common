@@ -1,6 +1,7 @@
 #pragma once
 #include "app_config.h"
 
+#if WITH_I2C
 __CEXTERN_START
 typedef enum {
     i2cSpeed_std,
@@ -17,3 +18,5 @@ HAL_StatusTypeDef i2c_eeprom_write(uint16_t DevAddress, uint16_t MemAddress, con
 HAL_StatusTypeDef i2c_eeprom_read(uint16_t DevAddress, uint16_t MemAddress, uint8_t *pData, uint16_t len);
 
 __CEXTERN_END
+
+#endif
