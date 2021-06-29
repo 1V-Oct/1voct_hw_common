@@ -28,7 +28,7 @@ void sw_init(void) {
   
 
   for (i = 0; i < SW_LAST; i++) {
-    gpio_init(sw_pins[i].port, sw_pins[i].pin, GPIO_CONFIG(GPIO_MODE_INPUT, 0));
+    // gpio_init(sw_pins[i].port, sw_pins[i].pin, GPIO_CONFIG(GPIO_MODE_INPUT, 0));
     // gpio_config_input()
     sw_state[i] = 0xff;
   }
@@ -36,11 +36,13 @@ void sw_init(void) {
 }
 
 
-void sw_scan(void) {
+void sw_scan_btn(void) {
   for (size_t i = 0; i < SW_LAST; i++) {
     sw_state[i] = (sw_state[i] << 1) | sw_read_gpio(sw_pins[i].port, sw_pins[i].pin);
   }
+}
 
+void sw_scan(void) {
   enc_state[0] = (enc_state[0] << 1) | sw_read_gpio(ENC_A_GPIO_Port, ENC_A_Pin);
   enc_state[1] = (enc_state[1] << 1) | sw_read_gpio(ENC_B_GPIO_Port, ENC_B_Pin);
 
