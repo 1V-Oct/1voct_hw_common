@@ -14,17 +14,17 @@
 
 #include "ssdfont.h"
 // #include "voct.h"
+#include "bsp/board.h"
 #include "vo_logger.h"
 #include "vo_string.h"
-#include "bsp/board.h"
 
 extern SPI_HandleTypeDef hspi1;
 extern I2C_HandleTypeDef hi2c1;
 
 static uint8_t m_ScreenBuffer[SSD1306_LCDWIDTH * SSD1306_LCDHEIGHT / 8];
 
-static uint8_t col_, row_;               // cursor position
-static uint8_t textSize_, textSpacing_;  // text size and horiz char spacing (pixels between)
+static uint8_t col_, row_;              // cursor position
+static uint8_t textSize_, textSpacing_; // text size and horiz char spacing (pixels between)
 
 #if BUILD_AVR
 
@@ -58,7 +58,7 @@ volatile uint8_t *portOutputRegister(uint8_t port) {
 
 #define SPI_CLOCK_DIV4 4
 
-#endif  // BUILD_AVR
+#endif // BUILD_AVR
 
 void spi_transfer(uint8_t c) {
 #ifdef __STM32F1xx_HAL_DEF
@@ -72,7 +72,7 @@ void spi_transfer(uint8_t c) {
 #endif
 }
 
-uint8_t pgm_read_byte(const uint8_t *p) {
+static uint8_t pgm_read_byte(const uint8_t *p) {
   return *p;
 }
 
@@ -104,7 +104,7 @@ static void i2cWrite(uint8_t cd, uint8_t c) {
 static inline void spiWrite(uint8_t c) {
 #if WITH_SSD1306_HW_SPI
   (void)spi_transfer(c);
-#else  // bit twiddle SPI
+#else // bit twiddle SPI
   for (uint8_t bit = 0x80; bit; bit >>= 1) {
     *clkport &= ~clkpinmask;
     if (c & bit)
@@ -116,7 +116,7 @@ static inline void spiWrite(uint8_t c) {
 #endif
 }
 
-#endif  // WITH_SSD1306_I2C
+#endif // WITH_SSD1306_I2C
 
 static void sendData(uint8_t c) {
 #if WITH_SSD1306_I2C
@@ -160,7 +160,7 @@ void sendCommand(uint8_t c) {
 }
 
 #define GPIO_HIGH GPIO_PIN_SET
-#define GPIO_LOW GPIO_PIN_RESET
+#define GPIO_LOW  GPIO_PIN_RESET
 
 #if 0
 void digitalWrite(gpio_t g, uint8_t val)
@@ -181,9 +181,9 @@ void ssd1306_init(void) {
   // Wire.begin();
 #endif
 
-  col_ = 0;
-  row_ = 0;
-  textSize_ = 1;
+  col_         = 0;
+  row_         = 0;
+  textSize_    = 1;
   textSpacing_ = 1;
 #if BUILD_AVR
   rstGpio.pinMode(Gpio::GPIO_OUTPUT);
@@ -195,9 +195,9 @@ void ssd1306_init(void) {
   // set pin directions
   pinMode(dc_, GPIO_OUTPUT);
   pinMode(cs_, GPIO_OUTPUT);
-  csport = portOutputRegister(digitalPinToPort(cs_));
+  csport    = portOutputRegister(digitalPinToPort(cs_));
   cspinmask = digitalPinToBitMask(cs_);
-  dcport = portOutputRegister(digitalPinToPort(dc_));
+  dcport    = portOutputRegister(digitalPinToPort(dc_));
   dcpinmask = digitalPinToBitMask(dc_);
 #else
 
@@ -206,12 +206,12 @@ void ssd1306_init(void) {
 #if WITH_SSD1306_HW_SPI
   //spi_init();
   //spi_set_clock_divider(SPI_CLOCK_DIV4); // 8 MHz
-#else  // bit twiddle SPI
+#else // bit twiddle SPI
   pinMode(data_, OUTPUT);
   pinMode(clk_, OUTPUT);
-  clkport = portOutputRegister(digitalPinToPort(clk_));
-  clkpinmask = digitalPinToBitMask(clk_);
-  mosiport = portOutputRegister(digitalPinToPort(data_));
+  clkport     = portOutputRegister(digitalPinToPort(clk_));
+  clkpinmask  = digitalPinToBitMask(clk_);
+  mosiport    = portOutputRegister(digitalPinToPort(data_));
   mosipinmask = digitalPinToBitMask(data_);
 #endif
 
@@ -231,49 +231,49 @@ void ssd1306_init(void) {
 
   // Init sequence for 128x64 OLED module
   DBG_SSD1306("SSD1306: Display Off\n");
-  sendCommand(SSD1306_DISPLAYOFF);  // 0xAE
+  sendCommand(SSD1306_DISPLAYOFF); // 0xAE
   DBG_SSD1306("SSD1306: Set clock div\n");
-  sendCommand(SSD1306_SETDISPLAYCLOCKDIV);  // 0xD5
-  sendCommand(0x80);                        // the suggested ratio 0x80
-  sendCommand(SSD1306_SETMULTIPLEX);        // 0xA8
+  sendCommand(SSD1306_SETDISPLAYCLOCKDIV); // 0xD5
+  sendCommand(0x80);                       // the suggested ratio 0x80
+  sendCommand(SSD1306_SETMULTIPLEX);       // 0xA8
   sendCommand(0x3F);
-  sendCommand(SSD1306_SETDISPLAYOFFSET);    // 0xD3
-  sendCommand(0x0);                         // no offset
-  sendCommand(SSD1306_SETSTARTLINE | 0x0);  // line #0
-  sendCommand(SSD1306_CHARGEPUMP);          // 0x8D
+  sendCommand(SSD1306_SETDISPLAYOFFSET);   // 0xD3
+  sendCommand(0x0);                        // no offset
+  sendCommand(SSD1306_SETSTARTLINE | 0x0); // line #0
+  sendCommand(SSD1306_CHARGEPUMP);         // 0x8D
   sendCommand(0x14);
-  sendCommand(SSD1306_MEMORYMODE);  // 0x20
-  sendCommand(0x00);                // was: 0x2 page mode
+  sendCommand(SSD1306_MEMORYMODE); // 0x20
+  sendCommand(0x00);               // was: 0x2 page mode
   sendCommand(SSD1306_SEGREMAP | 0x1);
   sendCommand(SSD1306_COMSCANDEC);
-  sendCommand(SSD1306_SETCOMPINS);  // 0xDA
+  sendCommand(SSD1306_SETCOMPINS); // 0xDA
   sendCommand(0x12);
-  sendCommand(SSD1306_SETCONTRAST);  // 0x81
+  sendCommand(SSD1306_SETCONTRAST); // 0x81
   sendCommand(0xCF);
-  sendCommand(SSD1306_SETPRECHARGE);  // 0xd9
+  sendCommand(SSD1306_SETPRECHARGE); // 0xd9
   sendCommand(0xF1);
-  sendCommand(SSD1306_SETVCOMDETECT);  // 0xDB
+  sendCommand(SSD1306_SETVCOMDETECT); // 0xDB
   sendCommand(0x40);
-  sendCommand(SSD1306_DISPLAYALLON_RESUME);  // 0xA4
-  sendCommand(SSD1306_NORMALDISPLAY);        // 0xA6
+  sendCommand(SSD1306_DISPLAYALLON_RESUME); // 0xA4
+  sendCommand(SSD1306_NORMALDISPLAY);       // 0xA6
 
-  sendCommand(SSD1306_DISPLAYON);  //--turn on oled panel
+  sendCommand(SSD1306_DISPLAYON); //--turn on oled panel
 }
 //------------------------------------------------------------------------------
 // clear the screen
 void ssd1306_clear(void) {
   sendCommand(SSD1306_COLUMNADDR);
-  sendCommand(0);                     // Column start address (0 = reset)
-  sendCommand(SSD1306_LCDWIDTH - 1);  // Column end address (127 = reset)
+  sendCommand(0);                    // Column start address (0 = reset)
+  sendCommand(SSD1306_LCDWIDTH - 1); // Column end address (127 = reset)
 
   sendCommand(SSD1306_PAGEADDR);
-  sendCommand(0);  // Page start address (0 = reset)
-  sendCommand(7);  // Page end address
+  sendCommand(0); // Page start address (0 = reset)
+  sendCommand(7); // Page end address
 
 #if WITH_SSD1306_I2C
 #ifdef TWBR
   uint8_t twbrbackup = TWBR;
-  TWBR = 12;  // upgrade to 400KHz!
+  TWBR               = 12; // upgrade to 400KHz!
 #endif
 
   //Serial.println(TWBR, DEC);
@@ -321,8 +321,8 @@ void ssd1306_setCursor(uint8_t row, uint8_t col) {
   if (col >= SSD1306_LCDWIDTH) {
     col = SSD1306_LCDWIDTH - 1;
   }
-  row_ = row;  // row is 8 pixels tall; must set to byte sized row
-  col_ = col;  // col is 1 pixel wide; can set to any pixel column
+  row_ = row; // row is 8 pixels tall; must set to byte sized row
+  col_ = col; // col is 1 pixel wide; can set to any pixel column
 
   sendCommand(SSD1306_SETLOWCOLUMN | (col & 0XF));
   sendCommand(SSD1306_SETHIGHCOLUMN | (col >> 4));
@@ -330,11 +330,12 @@ void ssd1306_setCursor(uint8_t row, uint8_t col) {
 }
 //------------------------------------------------------------------------------
 size_t ssd1306_write_char(uint8_t c) {
-  if (textSize_ == 1) {  // dedicated code since it's 4x faster than scaling
+  if (textSize_ == 1) { // dedicated code since it's 4x faster than scaling
 
-    if (col_ >= SSD1306_LCDWIDTH)
+    if (col_ >= 160)
       return 0;
-    col_ += 7;  // x7 font
+    LOGI("Col: %d", col_);
+    col_ += 7; // x7 font
     if (c < 32 || c > 127)
       c = 127;
     c -= 32;
@@ -344,13 +345,13 @@ size_t ssd1306_write_char(uint8_t c) {
       sendData(b);
     }
     for (uint8_t i = 0; i < textSpacing_; i++) {
-      if (col_ >= SSD1306_LCDWIDTH)
-        break;
+      // if (col_ >= SSD1306_LCDWIDTH)
+      //   break;
       col_++;
-      sendData(0);  // textSpacing_ pixels of blank space between characters
+      sendData(0); // textSpacing_ pixels of blank space between characters
     }
 
-  } else {  // scale characters (up to 8X)
+  } else { // scale characters (up to 8X)
 
     uint8_t sourceSlice, targetSlice, sourceBitMask, targetBitMask, extractedBit, targetBitCount;
     uint8_t startRow = row_;
@@ -362,10 +363,10 @@ size_t ssd1306_write_char(uint8_t c) {
       if (irow > 0)
         ssd1306_setCursor(startRow + irow, startCol);
       for (uint8_t iSlice = 0; iSlice < 5; iSlice++) {
-        sourceSlice = (uint8_t)pgm_read_byte(font + 5 * (c - 32) + iSlice);
-        targetSlice = 0;
-        targetBitMask = 0x01;
-        sourceBitMask = 0x01 << (irow * 8 / textSize_);
+        sourceSlice    = (uint8_t)pgm_read_byte(font + 5 * (c - 32) + iSlice);
+        targetSlice    = 0;
+        targetBitMask  = 0x01;
+        sourceBitMask  = 0x01 << (irow * 8 / textSize_);
         targetBitCount = textSize_ * 7 - irow * 8;
         do {
           extractedBit = sourceSlice & sourceBitMask;
@@ -424,7 +425,7 @@ size_t ssd1306_write_string(const char *s) {
 void SSD1306_text::Fill(SSD1306_text::COLOR color) {
   /* Set memory */
   uint32_t i;
-  uint8_t c;
+  uint8_t  c;
 
   c = (color == Black) ? 0x00 : 0xFF;
   for (i = 0; i < sizeof(m_ScreenBuffer); i++) {
@@ -432,11 +433,11 @@ void SSD1306_text::Fill(SSD1306_text::COLOR color) {
   }
 }
 
-#endif  // WITH_OLED_FB
+#endif // WITH_OLED_FB
 
 //------------------------------------------------------------------------------
 #if WITH_SSD1306_SYS_PRINT
-void ssd1306_writeInt(int i) {  // slighly smaller than system print()
+void ssd1306_writeInt(int i) { // slighly smaller than system print()
   char buffer[7];
   itoa(i, buffer, 10);
   write(buffer);
@@ -446,7 +447,7 @@ void ssd1306_writeInt(int i) {  // slighly smaller than system print()
 //------------------------------------------------------------------------------
 
 void ssd1306_setTextSize(uint8_t size, uint8_t spacing) {
-  textSize_ = size;
+  textSize_    = size;
   textSpacing_ = spacing;
 };
 
