@@ -63,6 +63,7 @@ These bits are written by software to configure the corresponding I/O port. Refe
 
 #define GPIO_CONFIG(MODE,CNF) (((CNF) << 2) | (MODE))
 
+#if 0
 inline void gpio_init(GPIO_TypeDef *GPIOx, const uint16_t pin_no, uint16_t config) {
   // if (pull == GPIO_NOPULL) {
     
@@ -88,6 +89,8 @@ inline void gpio_init(GPIO_TypeDef *GPIOx, const uint16_t pin_no, uint16_t confi
   //   GPIOx->CRH = config << (pin_no - 8);
   // }
 }
+
+#endif
 
 // inline void gpio_inp_pullup(GPIO_TypeDef *GPIOx, GPIO_Pin uint8_t pull) {
 

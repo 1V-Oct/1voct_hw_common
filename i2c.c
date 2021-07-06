@@ -3,6 +3,8 @@
 #include "vo_memory.h"
 #include "vo_string.h"
 
+#if WITH_I2C
+
 I2C_HandleTypeDef hi2c2;
 
 void i2c_init(void) {
@@ -338,3 +340,6 @@ HAL_StatusTypeDef i2c_eeprom_read(uint16_t DevAddress, uint16_t MemAddress, uint
   return HAL_OK;
   // return returnValue;
 }
+
+
+#endif
