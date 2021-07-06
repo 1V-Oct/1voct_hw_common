@@ -3,33 +3,13 @@
 #include <stdarg.h>
 #include "vo_logger.h"
 
-static uint8_t rx_byte;
+#if !defined(UART_USART_ENABLE)
+#error Must define UART_USART_ENABLE each bit enables separate UART
+#endif
 
-__weak void usart1_rx_cb(uint8_t c) {}
-__weak void usart2_rx_cb(uint8_t c) {}
-__weak void usart3_rx_cb(uint8_t c) {}
-
-typedef struct {
-  USART_TypeDef *uart;
-  // void           rx_cb(uint8_t c);
-} uart_t;
-
-
-const uart_rx_cb_t uart_rx_cb[3] = {
-  usart1_rx_cb,
-  usart2_rx_cb,
-  usart3_rx_cb,
-};
-
-const uart_t uart_ports[3] = {
-  { USART1 },
-  { USART2 },
-  { USART3 },
-};
-
-
-#define VO_UART_IRQ USART1_IRQn
-
+#if !defined(UART_PUTS_PORT_ID)
+#error Must define UART_PUTS_PORT_ID id of port to output puts
+#endif
 
 #if defined(STM32F103xB)
 
@@ -39,7 +19,9 @@ const uart_t uart_ports[3] = {
 #define VO_UART_RDR     DR
 #define VO_UART_DATAREG DR
 
-
+#define UART_USART1_PORT  USART1
+#define UART_USART2_PORT  USART2
+#define UART_USART3_PORT  USART3
 // this one can be defined either as constant number or call to selected Clock function
 #define VO_UART_CLOCK HAL_RCC_GetPCLK2Freq()
 // #define VO_UART_CLOCK HAL_RCC_GetHCLKFreq()
@@ -51,6 +33,9 @@ const uart_t uart_ports[3] = {
 #define VO_UART_RDR     RDR
 #define VO_UART_DATAREG TDR
 
+#define UART_USART5_PORT UART5
+#define UART_USART8_PORT UART8
+
 // this one can be defined either as constant number or call to selected Clock function
 #define VO_UART_CLOCK   HAL_RCC_GetPCLK2Freq()
 
@@ -58,21 +43,54 @@ const uart_t uart_ports[3] = {
 #error Unknown CPU
 #endif
 
-// #define VO_UART USART1
-// #define VO_UART_GPIO_TX_PORT GPIOA
-// #define VO_UART_SR SR
-// #define VO_UART_SR_RXNE USART_ISR_RXNE
-// #define VO_UART_RDR DR
-// #define VO_UART_DATAREG DR
-// #define VO_UART_SR SR
 
-// #define VO_UART_SR_RXNE     USART_ISR_RXNE_RXFNE_Msk
+static uint8_t rx_byte;
 
-// static void uart_default_rx(uint8_t b) {
-//   UNUSED(b);
-// }
+__weak void usart1_rx_cb(uint8_t c) {}
+__weak void usart2_rx_cb(uint8_t c) {}
+__weak void usart3_rx_cb(uint8_t c) {}
+__weak void usart5_rx_cb(uint8_t c) {}
+__weak void usart8_rx_cb(uint8_t c) {}
 
+typedef struct {
+  USART_TypeDef *uart;
+  uart_rx_cb_t  rx_cb;
+  // void           rx_cb(uint8_t c);
+} uart_t;
 
+const uart_t uart_ports[] = {
+#if (UART_USART_ENABLE & 0b00000001)
+  { UART_USART1_PORT, usart1_rx_cb },
+#endif
+#if (UART_USART_ENABLE & 0b00000010)
+  { UART_USART2_PORT, usart2_rx_cb },
+#endif
+#if (UART_USART_ENABLE & 0b00000100)
+  { UART_USART3_PORT, usart3_rx_cb },
+#endif
+#if (UART_USART_ENABLE & 0b00001000)
+  { UART_USART4_PORT, usart4_rx_cb },
+#endif
+#if (UART_USART_ENABLE & 0b00010000)
+  { UART_USART5_PORT, usart5_rx_cb },
+#endif
+#if (UART_USART_ENABLE & 0b00100000)
+  { UART_USART6_PORT, usart6_rx_cb },
+#endif
+#if (UART_USART_ENABLE & 0b01000000)
+  { UART_USART7_PORT, usart7_rx_cb },
+#endif
+#if (UART_USART_ENABLE & 0b10000000)
+  { UART_USART8_PORT, usart8_rx_cb },
+#endif
+};
+
+/**
+ * @brief Initialize UART port
+ * 
+ * @param id Port id to configure
+ * @param baud_rate Baudrate for port
+ */
 void uart_init(uint8_t id, uint32_t baud_rate) {
 
   // make sure the relevant pins are appropriately set up.
@@ -142,7 +160,8 @@ void uart_it(uint8_t id) {
       VO_UART->ICR |= USART_ICR_ORECF;
     }
     rx_byte = VO_UART->VO_UART_RDR;
-    uart_rx_cb(rx_byte);
+    uart_ports[id].rx_cb(rx_byte);
+    // uart_rx_cb[id](rx_byte);
   }
 #else
   if (VO_UART->ISR & USART_ISR_ORE) {
@@ -178,7 +197,7 @@ void uart_puts(const char *buf) {
     p = (const uint8_t *)null_str;
 
   while (*p) {
-    uart_tx(0, *p++);
+    uart_tx(UART_PUTS_PORT_ID, *p++);
   };
 }
 
