@@ -44,8 +44,6 @@
 #endif
 
 
-static uint8_t rx_byte;
-
 __weak void usart1_rx_cb(uint8_t c) {}
 __weak void usart2_rx_cb(uint8_t c) {}
 __weak void usart3_rx_cb(uint8_t c) {}
@@ -147,11 +145,13 @@ static void uart_wait_flag(USART_TypeDef *uart, uint32_t flag, uint8_t stat) {
 // }
 
 void uart_it(uint8_t id) {
+  uint8_t rx_byte;
   USART_TypeDef *uart = uart_ports[id].uart;
 #if defined(STM32F103xB)
   if (uart->VO_UART_ISR & VO_UART_SR_RXNE) {
     rx_byte = uart->DR;
-    uart_rx_cb[id](rx_byte);
+    // uart_rx_cb[id](rx_byte);
+    uart_ports[id].rx_cb(rx_byte);
   }
 #elif defined(STM32H750xx)
 #if 1
