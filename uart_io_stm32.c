@@ -33,6 +33,7 @@
 #define VO_UART_RDR     RDR
 #define VO_UART_DATAREG TDR
 
+#define UART_USART3_PORT USART3
 #define UART_USART5_PORT UART5
 #define UART_USART8_PORT UART8
 
@@ -124,9 +125,10 @@ void uart_init(uint8_t id, uint32_t baud_rate) {
   //   pclk = HAL_RCC_GetPCLK1Freq();
   //   pclk = 110000000
 
+
   USART_TypeDef *uart = uart_ports[id].uart;
 
-  // BRR is clock divided by baud rate
+  // BRR is clock divided by baud rates
   uint32_t sysclock = VO_UART_CLOCK;
   uint32_t brr      = sysclock / baud_rate;
 
@@ -155,11 +157,11 @@ void uart_it(uint8_t id) {
   }
 #elif defined(STM32H750xx)
 #if 1
-  while (VO_UART->ISR & USART_ISR_RXNE_RXFNE) {
-    if (VO_UART->ISR & USART_ISR_ORE) {
-      VO_UART->ICR |= USART_ICR_ORECF;
+  while (uart->ISR & USART_ISR_RXNE_RXFNE) {
+    if (uart->ISR & USART_ISR_ORE) {
+      uart->ICR |= USART_ICR_ORECF;
     }
-    rx_byte = VO_UART->VO_UART_RDR;
+    rx_byte = uart->VO_UART_RDR;
     uart_ports[id].rx_cb(rx_byte);
     // uart_rx_cb[id](rx_byte);
   }
