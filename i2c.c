@@ -72,6 +72,7 @@ void i2c_detect(void) {
       LOGI("Device found: 0x%x", address);
       devices++;
     }
+    // LOGI(".");
   }
   /* Feedback of the total number of devices. */
   if (0u == devices) {
@@ -327,16 +328,16 @@ HAL_StatusTypeDef i2c_eeprom_read(uint16_t DevAddress, uint16_t MemAddress, uint
   addr[0] = (uint8_t)(MemAddress & 0xFF);
 
   /* First we send the memory location address where start reading data */
-  // returnValue = HAL_I2C_Master_Transmit(&hi2c2, DevAddress, addr, 2, HAL_MAX_DELAY);
-  // if (returnValue != HAL_OK)
-  //   return returnValue;
+  returnValue = HAL_I2C_Master_Transmit(&hi2c2, DevAddress, addr, 2, HAL_MAX_DELAY);
+  if (returnValue != HAL_OK)
+    return returnValue;
 
-  i2c_write(I2C2, DevAddress, addr, 2);
+  // i2c_write(I2C2, DevAddress, addr, 2);
   /* Next we can retrieve the data from EEPROM */
-  // while (HAL_I2C_Master_Receive(&hi2c2, DevAddress, pData, len, HAL_MAX_DELAY) != HAL_OK)
-  //   ;
+  while (HAL_I2C_Master_Receive(&hi2c2, DevAddress, pData, len, HAL_MAX_DELAY) != HAL_OK)
+    ;
 
-  i2c_read(I2C2, DevAddress, pData, len);
+  // i2c_read(I2C2, DevAddress, pData, len);
   return HAL_OK;
   // return returnValue;
 }
