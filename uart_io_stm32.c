@@ -3,6 +3,9 @@
 #include <stdarg.h>
 #include "vo_logger.h"
 
+#define WITH_UART_FIFO    (1)
+
+
 #if !defined(UART_USART_ENABLE)
 #error Must define UART_USART_ENABLE each bit enables separate UART
 #endif
@@ -134,13 +137,19 @@ void uart_init(uint8_t id, uint32_t baud_rate) {
 
   uart->CR1 = 0;   //reset everything
   uart->BRR = brr;
+#if WITH_UART_FIFO
+  uart->CR1 |= USART_CR1_FIFOEN;
+#endif
   uart->CR1 |= USART_CR1_RE | USART_CR1_TE | USART_CR1_UE | VO_UART_CR1_RXNEIE;
 }
 
 static void uart_wait_flag(USART_TypeDef *uart, uint32_t flag, uint8_t stat) {
   while ((READ_BIT(uart->VO_UART_ISR, flag) == flag ? SET : RESET) == stat) {
+  // while ((READ_BIT(uart->VO_UART_ISR, flag) == flag) == stat) {
   }
 }
+
+#define WAIT_FLAG(uart, reg, flag, res) while(((uart->reg & flag) == flag) == res);
 
 // void uart_register_rx_cb(uart_rx_cb_t f) {
 //   uart[id].rx_cb = f;
@@ -185,11 +194,32 @@ void uart_it(uint8_t id) {
 
 void uart_tx(uint8_t id, uint8_t c) {
   USART_TypeDef *uart = uart_ports[id].uart;
+#if WITH_UART_FIFO
+  uart_wait_flag(uart, USART_ISR_TXE_TXFNF, RESET);
+#else
   uart_wait_flag(uart, UART_FLAG_TC, RESET);
   uart_wait_flag(uart, UART_FLAG_TXE, RESET);
+#endif
+  // WAIT_FLAG(uart, ISR, USART_ISR_TXE_TXFNF, SET);
+  //while(((uart->ISR & USART_ISR_TXE_TXFNF) == 0));
   uart->VO_UART_DATAREG = c;
 }
 
+void uart_send(uint8_t id, uint8_t *buf, uint8_t len) {
+  USART_TypeDef *uart = uart_ports[id].uart;
+
+  while(len--) {
+#if WITH_UART_FIFO
+  uart_wait_flag(uart, USART_ISR_TXE_TXFNF, RESET);
+#else
+  uart_wait_flag(uart, UART_FLAG_TC, RESET);
+  uart_wait_flag(uart, UART_FLAG_TXE, RESET);
+#endif
+  // WAIT_FLAG(uart, ISR, USART_ISR_TXE_TXFNF, SET);
+  //while(((uart->ISR & USART_ISR_TXE_TXFNF) == 0));
+  uart->VO_UART_DATAREG = *buf++;
+  }
+}
 static const char *null_str = "<null>";
 
 void uart_puts(const char *buf) {
