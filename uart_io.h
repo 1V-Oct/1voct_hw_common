@@ -13,6 +13,8 @@ void uart_tx(uint8_t id, uint8_t c);
 void uart_puts(const char *buf);
 void uart_printf(const char* fmt, ...);
 void uart_it(uint8_t id);
+void uart_send(uint8_t id, uint8_t *buf, uint8_t len);
+
 
 __CEXTERN_END
 
