@@ -130,7 +130,7 @@ void nor_erase_sector(uint32_t addr) {
 }
 
 #if 1
-void nor_read_memory(uint32_t addr, void *data, uint32_t len) {
+int32_t nor_read_memory(uint32_t addr, void *data, uint32_t len) {
   uint8_t cmd_with_addr[6];
 
   gpio_reset_pin(FLASH_CS_GPIO_Port, FLASH_CS_Pin);
@@ -145,6 +145,7 @@ void nor_read_memory(uint32_t addr, void *data, uint32_t len) {
   nor_recv(data, len);
 
   gpio_set_pin(FLASH_CS_GPIO_Port, FLASH_CS_Pin);
+  return len;
 }
 
 void nor_write_memory(uint32_t addr, void *data, uint32_t len) {
@@ -154,11 +155,14 @@ void nor_write_memory(uint32_t addr, void *data, uint32_t len) {
   // nor_read_cmd(SFLASH_CMD_READ_STATUS, &status, 1);
   // LOGI("STATUS %02x", status);
 
+
+  // check for white in progress
+  do {
+    nor_read_cmd(SFLASH_CMD_READ_STATUS, &status, 1);
+    LOGI("STATUS %02x", status);
+} while (status & 0x01);
+
   nor_cmd(SFLASH_CMD_WRITE_ENABLE);
-
-  nor_read_cmd(SFLASH_CMD_READ_STATUS, &status, 1);
-  LOGI("STATUS %02x", status);
-
 
   cmd_with_addr[0] = SFLASH_CMD_PAGE_PROGRAM;
   nor_fill_address(cmd_with_addr + 1, addr);
@@ -192,6 +196,6 @@ void nor_init(void) {
     uart_printf("%02x", uid[i]);
   }
   uart_printf("\n");
-  uart_printf("%s\n", uid);
+  // uart_printf("%s\n", uid);
 #endif
 }
