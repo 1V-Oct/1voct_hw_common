@@ -421,13 +421,13 @@ typedef struct {
 
 
 
-void nor_init(void);
+uint8_t nor_init(void);
 
 void nor_erase_chip(void);
 // void nor_read(uint8_t *data, uint32_t addr, uint32_t len);
 
 int32_t nor_read_memory(uint32_t addr, void *data, uint32_t len);
-void nor_write_memory(uint32_t addr, void *data, uint32_t len);
+int32_t nor_write_memory(uint32_t addr, void *data, uint32_t len);
 void nor_erase_sector(uint32_t addr);
 
 #ifdef __cplusplus
