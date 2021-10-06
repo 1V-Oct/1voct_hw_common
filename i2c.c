@@ -61,7 +61,12 @@ void i2c_init(void) {
   __HAL_I2C_ENABLE(hi2c);
 }
 
-void i2c_detect(void) {
+/**
+ * @brief Detects and prints devices on I2C bus
+ * 
+ * @return uint8_t Number of devices detected
+ */
+uint8_t i2c_detect(void) {
   uint8_t devices = 0u;
   // LOGI("Searching for I2C devices on the bus...\n");
   /* Values outside 0x03 and 0x77 are invalid. */
@@ -80,6 +85,7 @@ void i2c_detect(void) {
   } else {
     LOGI("Devcount: %d", devices);
   }
+  return devices;
 }
 
 #define I2C_7BIT_ADDR  (0 << 31)
@@ -88,43 +94,41 @@ void i2c_detect(void) {
 #define I2C_READ  0
 #define I2C_WRITE 1
 
-
 #if 1
 
 // #include "i2c.h"
 
-
 static uint32_t setupTiming(i2cSpeed_t spd, uint32_t clockFreq) {
-    (void) spd;
-    (void) clockFreq;
-    uint32_t presc = 0;
-    uint32_t sdadel = 2;
-    uint32_t scldel = 2;
-    uint32_t scll = 6;
-    uint32_t sclh = 7;
+  (void)spd;
+  (void)clockFreq;
+  uint32_t presc  = 0;
+  uint32_t sdadel = 2;
+  uint32_t scldel = 2;
+  uint32_t scll   = 6;
+  uint32_t sclh   = 7;
 
-    return  presc << 28 |
-            scldel << 20 |
-            sdadel << 16 |
-            sclh << 8 |
-            scll;
+  return presc << 28 |
+         scldel << 20 |
+         sdadel << 16 |
+         sclh << 8 |
+         scll;
 }
 
 void i2c_init_int(I2C_TypeDef *i2c, i2cSpeed_t spd) {
-    // assert(i2c == I2C1 || i2c == I2C2);
-    // assert(spd < i2cSpeed_count);
+  // assert(i2c == I2C1 || i2c == I2C2);
+  // assert(spd < i2cSpeed_count);
 
-    // if (i2c == I2C1) {
-    //     rccEnableI2C1();
-    // } else if (i2c == I2C2) {
-    //     rccEnableI2C2();
-    // }
+  // if (i2c == I2C1) {
+  //     rccEnableI2C1();
+  // } else if (i2c == I2C2) {
+  //     rccEnableI2C2();
+  // }
 
-    // Setup timing register
-    i2c->TIMINGR = setupTiming(spd, SystemCoreClock);
-    
-    // Reset state
-    i2c->CR1 &= ~I2C_CR1_PE;
+  // Setup timing register
+  i2c->TIMINGR = setupTiming(spd, SystemCoreClock);
+
+  // Reset state
+  i2c->CR1 &= ~I2C_CR1_PE;
 }
 #endif
 #if 1
@@ -150,7 +154,7 @@ static uint32_t i2cSetup(uint32_t addr, uint8_t direction) {
 #if 1
 // Will return the number of data bytes written to the device
 uint32_t i2c_write(I2C_TypeDef *i2c, uint32_t addr, uint8_t *txBuffer,
-                  uint32_t len) {
+                   uint32_t len) {
   // assert(i2c == I2C1 || i2c == I2C2);
   // assert(txBuffer != NULL);
   // assert(len > 0);
@@ -211,61 +215,61 @@ uint32_t i2c_write(I2C_TypeDef *i2c, uint32_t addr, uint8_t *txBuffer,
 #endif
 #if 1
 uint32_t i2c_read(I2C_TypeDef *i2c, uint8_t addr, uint8_t *rxBuffer,
-                 uint32_t numBytes) {
-    // assert(i2c == I2C1 || i2c == I2C2);
-    // assert(rxBuffer != NULL);
-    // assert(numBytes > 0);
+                  uint32_t numBytes) {
+  // assert(i2c == I2C1 || i2c == I2C2);
+  // assert(rxBuffer != NULL);
+  // assert(numBytes > 0);
 
-    uint32_t numRxBytes = 0;
+  uint32_t numRxBytes = 0;
 
-    i2c->CR1 &= ~I2C_CR1_PE;
-    i2c->CR2 = 0;
+  i2c->CR1 &= ~I2C_CR1_PE;
+  i2c->CR2 = 0;
 
-    i2c->CR2 = i2cSetup(addr, I2C_READ);
+  i2c->CR2 = i2cSetup(addr, I2C_READ);
 
-    if (numBytes > 0xFF) {
+  if (numBytes > 0xFF) {
+    i2c->CR2 |= 0x00FF0000 | I2C_CR2_RELOAD;
+  } else {
+    i2c->CR2 |= ((numBytes & 0xFF) << 16) | I2C_CR2_AUTOEND;
+  }
+  i2c->CR1 |= I2C_CR1_PE;
+  i2c->CR2 |= I2C_CR2_START;
+
+  while (i2c->CR2 & I2C_CR2_START)
+    ;
+  uint8_t  done = 0;
+  uint32_t i    = 0;
+  while (!done && i < 0x0000001F) {
+    i++;
+
+    if (i2c->ISR & I2C_ISR_RXNE) {
+      // Device acknowledged and we must send the next byte
+      if (numRxBytes < numBytes) {
+        rxBuffer[numRxBytes++] = i2c->RXDR;
+      }
+
+      // assert(numRxBytes <= numBytes);
+
+      i = 0;
+    }
+
+    if (i2c->ISR & I2C_ISR_TC) {
+      done = 1;
+    }
+
+    if (i2c->ISR & I2C_ISR_TCR) {
+      i = 0;
+      if ((numBytes - numRxBytes) > 0xFF) {
         i2c->CR2 |= 0x00FF0000 | I2C_CR2_RELOAD;
-    } else {
-        i2c->CR2 |= ((numBytes & 0xFF) << 16) | I2C_CR2_AUTOEND;
+      } else {
+        i2c->CR2 &= ~(0x00FF0000 | I2C_CR2_RELOAD);
+        i2c->CR2 |= ((numBytes - numRxBytes) & 0xFF) << 16 |
+                    I2C_CR2_AUTOEND;
+      }
     }
-    i2c->CR1 |= I2C_CR1_PE;
-    i2c->CR2 |= I2C_CR2_START;
-
-    while(i2c->CR2 & I2C_CR2_START);
-    uint8_t done = 0;
-    uint32_t i = 0;
-    while (!done && i < 0x0000001F) {
-        i++;
-
-        if (i2c->ISR & I2C_ISR_RXNE) {
-           // Device acknowledged and we must send the next byte
-            if (numRxBytes < numBytes){
-                rxBuffer[numRxBytes++] = i2c->RXDR;
-            }
-
-            // assert(numRxBytes <= numBytes);
-
-            i = 0;
-        }
-
-        if (i2c->ISR & I2C_ISR_TC) {
-            done = 1;
-        }
-
-        if (i2c->ISR & I2C_ISR_TCR) {
-            i = 0;
-            if ((numBytes - numRxBytes) > 0xFF) {
-                i2c->CR2 |= 0x00FF0000 | I2C_CR2_RELOAD;
-            } else {
-                i2c->CR2 &= ~(0x00FF0000 | I2C_CR2_RELOAD);
-                i2c->CR2 |= ((numBytes - numRxBytes) & 0xFF) << 16 |
-                            I2C_CR2_AUTOEND;
-            }
-        }
-
-    }
-    i2c->CR1 &= ~I2C_CR1_PE;
-    return numRxBytes;
+  }
+  i2c->CR1 &= ~I2C_CR1_PE;
+  return numRxBytes;
 }
 #endif
 #define ONEPAGE (16)
@@ -341,6 +345,5 @@ HAL_StatusTypeDef i2c_eeprom_read(uint16_t DevAddress, uint16_t MemAddress, uint
   return HAL_OK;
   // return returnValue;
 }
-
 
 #endif

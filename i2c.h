@@ -13,7 +13,7 @@ typedef enum {
 
 void i2c_init(void);
 void i2c_init_int(I2C_TypeDef *i2c, i2cSpeed_t spd);
-void i2c_detect(void);
+uint8_t i2c_detect(void);
 HAL_StatusTypeDef i2c_eeprom_write(uint16_t DevAddress, uint16_t MemAddress, const uint8_t *pData, uint16_t len);
 HAL_StatusTypeDef i2c_eeprom_read(uint16_t DevAddress, uint16_t MemAddress, uint8_t *pData, uint16_t len);
 
