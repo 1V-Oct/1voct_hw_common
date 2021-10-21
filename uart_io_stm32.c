@@ -2,6 +2,7 @@
 #include "vo_string.h"
 #include <stdarg.h>
 #include "vo_logger.h"
+#include "crash_handler.h"
 
 #define WITH_UART_FIFO    (1)
 
@@ -53,6 +54,8 @@ __weak void usart2_rx_cb(uint8_t c) {}
 __weak void usart3_rx_cb(uint8_t c) {}
 __weak void usart5_rx_cb(uint8_t c) {}
 __weak void usart8_rx_cb(uint8_t c) {}
+
+__weak void crx_log(char c) {}
 
 typedef struct {
   USART_TypeDef *uart;
@@ -222,14 +225,17 @@ void uart_send(uint8_t id, uint8_t *buf, uint8_t len) {
 }
 static const char *null_str = "<null>";
 
+
+
 void uart_puts(const char *buf) {
   const uint8_t *p = (const uint8_t *)buf;
 
   if (buf == NULL)
     p = (const uint8_t *)null_str;
-
-  while (*p) {
-    uart_tx(UART_PUTS_PORT_ID, *p++);
+  char c;
+  while ((c = *p++) != 0) {
+    uart_tx(UART_PUTS_PORT_ID, c);
+    crx_log(c);
   };
 }
 
