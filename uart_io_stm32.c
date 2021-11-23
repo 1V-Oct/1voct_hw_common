@@ -2,9 +2,12 @@
 #include "vo_string.h"
 #include <stdarg.h>
 #include "vo_logger.h"
-#include "crash_handler.h"
 
-#define WITH_UART_FIFO    (1)
+#if (WITH_CRASH_HANDLER == 1)
+#include "crash_handler.h"
+#endif
+
+// #define WITH_UART_FIFO    (1)
 
 
 #if !defined(UART_USART_ENABLE)
@@ -227,24 +230,28 @@ static const char *null_str = "<null>";
 
 
 
-void uart_puts(const char *buf) {
-  const uint8_t *p = (const uint8_t *)buf;
+const char * uart_puts(const char *buf) {
+  const char *p = buf;
 
   if (buf == NULL)
-    p = (const uint8_t *)null_str;
+    p = null_str;
   char c;
   while ((c = *p++) != 0) {
     uart_tx(UART_PUTS_PORT_ID, c);
+#if (WITH_CRASH_HANDLER == 1)
     crx_log(c);
+#endif
   };
+  return p;
 }
 
-void uart_printf(const char *fmt, ...) {
+int uart_printf(const char *fmt, ...) {
   char              buf[400];
   __builtin_va_list args;
 
   va_start(args, fmt);
   vo_vsprintf(buf, fmt, args);
   va_end(args);
-  uart_puts(buf);
+  
+  return uart_puts(buf) - buf;
 }
