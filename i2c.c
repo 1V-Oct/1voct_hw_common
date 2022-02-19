@@ -283,8 +283,9 @@ uint32_t i2c_read(I2C_TypeDef *i2c, uint8_t addr, uint8_t *rxBuffer,
 
 HAL_StatusTypeDef i2c_eeprom_write(uint16_t DevAddress, uint16_t MemAddress, const uint8_t *pData, uint16_t len) {
   HAL_StatusTypeDef returnValue = HAL_ERROR;
-  uint8_t           data[18]    = {0};
+  uint8_t           data[18];
 
+  vo_memset(data, 0, 18);
   uint16_t completed = 0;
   while (len > 0) {
     /* We compute the MSB and LSB parts of the memory address */
