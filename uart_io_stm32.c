@@ -172,14 +172,19 @@ void uart_it(uint8_t id) {
   }
 #elif defined(STM32H750xx)
 #if 1
+  // CLEAR_BIT(huart->Instance->CR1, USART_CR1_PEIE);
+  // CLEAR_BIT(huart->Instance->CR3, USART_CR3_EIE);
+  // uart->CR1 &= ~USART_CR1_PEIE;
+  // uart->CR3 &= ~USART_CR3_EIE;
   while (uart->ISR & USART_ISR_RXNE_RXFNE) {
     if (uart->ISR & USART_ISR_ORE) {
       uart->ICR |= USART_ICR_ORECF;
     }
     rx_byte = uart->VO_UART_RDR;
-    uart_ports[id].rx_cb(rx_byte);
+    if (uart_ports[id].rx_cb) uart_ports[id].rx_cb(rx_byte);
     // uart_rx_cb[id](rx_byte);
   }
+
 #else
   if (VO_UART->ISR & USART_ISR_ORE) {
     VO_UART->ICR |= USART_ICR_ORECF;
