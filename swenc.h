@@ -3,29 +3,28 @@
 #include "app_config.h"
 #include "swenc_types.h"
 
-
 extern const sw_pin_t sw_pins[];
+extern const sw_pin_t enc_pins[][2];
 
 typedef struct {
-  uint8_t   state[2];
+  uint8_t state[2];
 } enc_state_t;
 
 // typedef sw_state_t uint8_t;
 
-#define SW_STATE    uint8_t   sw_state[SW_LAST];
-#define ENC_STATE   uint8_t   enc_state[2];
+#define SW_STATE  uint8_t sw_state[SW_LAST__];
+#define ENC_STATE uint8_t enc_state[ENC_LAST__][2];
 
-extern SW_STATE
-extern ENC_STATE
+extern SW_STATE extern ENC_STATE
 
+  __CEXTERN_START
 
-__CEXTERN_START
-
-void sw_init(void);
-void sw_scan(void);
-void sw_scan_btn(void);
+  void
+        sw_init(void);
+void    sw_scan(void);
+void    sw_scan_btn(void);
 uint8_t sw_get_raw(uint8_t sw);
-int32_t sw_enc_get_val(void);
+int32_t sw_enc_get_val(uint8_t idx);
 
 inline bool sw_pressed(uint8_t sw) {
   return sw_state[sw] == 0x00;
