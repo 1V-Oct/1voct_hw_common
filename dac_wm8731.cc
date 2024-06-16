@@ -1,5 +1,5 @@
 #include "app_config.h"
-#include "hw/bsp/board.h"
+#include "../board.h"
 #include "vo_common.h"
 #include "vo_logger.h"
 #include "vo_string.h"
