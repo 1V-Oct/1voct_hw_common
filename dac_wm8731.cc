@@ -1,5 +1,5 @@
-#include "app_config.h"
 #include "../board.h"
+#include "app_config.h"
 #include "vo_common.h"
 #include "vo_logger.h"
 #include "vo_string.h"
@@ -10,11 +10,15 @@ DMA_HandleTypeDef hdma_spi2_tx;
 DMA_HandleTypeDef hdma_spi2_rx;
 
 #undef kNumOutputs
-#define kNumOutputs (2)
+#define kNumOutputs (4)
 
-DMA_BUFFER uint16_t rx_dma_buffer_[BLOCK_SIZE * kNumOutputs * 2 * 2];
-DMA_BUFFER uint16_t tx_dma_buffer_[BLOCK_SIZE * kNumOutputs * 2 * 2];
-
+#if WITH_DAC_WM8731_TWIN
+DMA_BUFFER uint16_t rx_dma_buffer_[2][BLOCK_SIZE * 2 * 2 * 2];
+DMA_BUFFER uint16_t tx_dma_buffer_[2][BLOCK_SIZE * 2 * 2 * 2];
+#else
+DMA_BUFFER uint16_t rx_dma_buffer_[BLOCK_SIZE * 2 * 2 * 2];
+DMA_BUFFER uint16_t tx_dma_buffer_[BLOCK_SIZE * 2 * 2 * 2];
+#endif
 #define WM8731_I2C_ADDR      0x34
 
 #define WM8731_REG_LLINEIN   0
@@ -550,6 +554,8 @@ void dac_priv_init(void) {
   //   LOGI("x");
   // }
 
+  
+
 #if WITH_DAC_WM8731_I2S
 #if WITH_DAC_DMA
   // HAL_I2SEx_TransmitReceive_DMA(&hi2s2, tx_dma_buffer_, rx_dma_buffer_, BLOCK_SIZE * kNumOutputs * 2);
@@ -568,24 +574,46 @@ void dac_priv_init(void) {
 #endif
 
   hsai_BlockA1.State = HAL_SAI_STATE_READY;
-  HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t *)tx_dma_buffer_, 4 * BLOCK_SIZE);
-  HAL_SAI_Receive_DMA(&hsai_BlockB1, (uint8_t *)rx_dma_buffer_, 4 * BLOCK_SIZE);
+  HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t *)tx_dma_buffer_[0], 4 * BLOCK_SIZE);
+  HAL_SAI_Receive_DMA(&hsai_BlockB1, (uint8_t *)rx_dma_buffer_[0], 4 * BLOCK_SIZE);
 
   hsai_BlockA2.State = HAL_SAI_STATE_READY;
-  HAL_SAI_Transmit_DMA(&hsai_BlockA2, (uint8_t *)tx_dma_buffer_, 4 * BLOCK_SIZE);
-  HAL_SAI_Receive_DMA(&hsai_BlockB2, (uint8_t *)rx_dma_buffer_, 4 * BLOCK_SIZE);
+  HAL_SAI_Transmit_DMA(&hsai_BlockA2, (uint8_t *)tx_dma_buffer_[1], 4 * BLOCK_SIZE);
+  HAL_SAI_Receive_DMA(&hsai_BlockB2, (uint8_t *)rx_dma_buffer_[1], 4 * BLOCK_SIZE);
 }
 
-int16_t dac_buf_in[BLOCK_SIZE * 2];
-int16_t dac_buf_out[BLOCK_SIZE * 2];
+int16_t dac_buf_in[BLOCK_SIZE * kNumOutputs];
+int16_t dac_buf_out[BLOCK_SIZE * kNumOutputs];
 
 void dac_fill_buffer(uint16_t buffer) {
+#if WITH_DAC_WM8731_TWIN
   int16_t *sp = (int16_t *)&rx_dma_buffer_[(buffer ^ 1) * BLOCK_SIZE * kNumOutputs];
   int16_t *dp = (int16_t *)&tx_dma_buffer_[(buffer ^ 0) * BLOCK_SIZE * kNumOutputs];
   for (size_t i = 0; i < BLOCK_SIZE * 2; ++i) {
     dac_buf_in[i] = sp[i];
     dp[i]         = dac_buf_out[i];
   }
+#else
+  int16_t *sp0 = (int16_t *)&rx_dma_buffer_[0][(buffer ^ 1) * BLOCK_SIZE * 2];
+  int16_t *dp0 = (int16_t *)&tx_dma_buffer_[0][(buffer ^ 0) * BLOCK_SIZE * 2];
+  int16_t *sp1 = (int16_t *)&rx_dma_buffer_[1][(buffer ^ 1) * BLOCK_SIZE * 2];
+  int16_t *dp1 = (int16_t *)&tx_dma_buffer_[1][(buffer ^ 0) * BLOCK_SIZE * 2];
+  int      px  = 0;
+  for (size_t i = 0; i < BLOCK_SIZE; ++i) {
+    dac_buf_in[px] = *sp0++;
+    *dp0++         = dac_buf_out[px];
+    px++;
+    dac_buf_in[px] = *sp0++;
+    *dp0++         = dac_buf_out[px];
+    px++;
+    dac_buf_in[px] = *sp1++;
+    *dp1++         = dac_buf_out[px];
+    px++;
+    dac_buf_in[px] = *sp1++;
+    *dp1++         = dac_buf_out[px];
+    px++;
+  }
+#endif
   // SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk
   *((volatile uint32_t *)0xE000ED04) = 1 << 28;
 }
