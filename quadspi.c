@@ -473,7 +473,7 @@ uint8_t CSP_QSPI_EraseSectors(uint32_t EraseStartAddress,
   return HAL_OK;
 }
 
-uint8_t CSP_QSPI_WriteMemory(uint8_t *buffer, uint32_t address,
+uint8_t CSP_QSPI_WriteMemory(const void *buffer, uint32_t address,
                              uint32_t buffer_size) {
 
   QSPI_CommandTypeDef sCommand;
@@ -531,7 +531,7 @@ uint8_t CSP_QSPI_WriteMemory(uint8_t *buffer, uint32_t address,
     }
 
     /* Transmission of the data */
-    if (HAL_QSPI_Transmit(&hqspi, buffer, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+    if (HAL_QSPI_Transmit(&hqspi, (void *)buffer, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
 
       return HAL_ERROR;
     }
@@ -659,7 +659,7 @@ uint8_t QSPI_ResetChip(void) {
   return HAL_OK;
 }
 
-uint8_t CSP_QSPI_Read(uint8_t *pData, uint32_t ReadAddr, uint32_t Size) {
+uint8_t CSP_QSPI_Read(void *pData, uint32_t ReadAddr, uint32_t Size) {
   QSPI_CommandTypeDef s_command;
 
   /* Initialize the read command */

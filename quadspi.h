@@ -18,11 +18,11 @@ uint8_t CSP_QSPI_EraseSector(uint32_t EraseStartAddress);
 uint8_t CSP_QSPI_EraseSectors(uint32_t EraseStartAddress, uint32_t EraseEndAddress);
 
 uint8_t CSP_QSPI_EraseBlock(uint32_t flash_address);
-uint8_t CSP_QSPI_WriteMemory(uint8_t* buffer, uint32_t address, uint32_t buffer_size);
+uint8_t CSP_QSPI_WriteMemory(const void* buffer, uint32_t address, uint32_t buffer_size);
 uint8_t CSP_QSPI_EnableMemoryMappedMode(void);
 uint8_t CSP_QSPI_Erase_Chip (void);
 uint8_t QSPI_AutoPollingMemReady(void);
-uint8_t CSP_QSPI_Read(uint8_t* pData, uint32_t ReadAddr, uint32_t Size);
+uint8_t CSP_QSPI_Read(void* pData, uint32_t ReadAddr, uint32_t Size);
 
 /* USER CODE END Private defines */
 
