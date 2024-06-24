@@ -114,7 +114,7 @@ void wm8731_init(void) {
   wm8731_write_reg(WM8731_REG_INTERFACE, 0b000000010); // Interface format - 16-bit I2S
   wm8731_write_reg(WM8731_REG_ACTIVE, 0b000000001);    // Active control - engage!
 
-  HAL_Delay(1000);
+  // HAL_Delay(1000);
   // fill_audio_buffer();
   // HAL_I2S_Transmit_DMA(&hi2s3, (uint16_t *)audio_data, 2 * AUDIO_BUFFER_SIZE);
   // while (1) {
@@ -527,11 +527,11 @@ void dac_priv_init(void) {
   dac_sai_init();
 #endif
 
+  __HAL_SAI_DISABLE(&hsai_BlockA1);
+  __HAL_SAI_DISABLE(&hsai_BlockA2);
+  __HAL_SAI_DISABLE(&hsai_BlockB1);
+  __HAL_SAI_DISABLE(&hsai_BlockB2);
   wm8731_init();
-  // __HAL_SAI_DISABLE(&hsai_BlockA1);
-  // __HAL_SAI_DISABLE(&hsai_BlockA2);
-  // __HAL_SAI_DISABLE(&hsai_BlockB1);
-  // __HAL_SAI_DISABLE(&hsai_BlockB2);
 
   // hsai_BlockA1.State = HAL_SAI_STATE_READY;
   // HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t *)audio_data, 2 * AUDIO_BUFFER_SIZE);
@@ -554,8 +554,6 @@ void dac_priv_init(void) {
   //   LOGI("x");
   // }
 
-  
-
 #if WITH_DAC_WM8731_I2S
 #if WITH_DAC_DMA
   // HAL_I2SEx_TransmitReceive_DMA(&hi2s2, tx_dma_buffer_, rx_dma_buffer_, BLOCK_SIZE * kNumOutputs * 2);
@@ -572,6 +570,20 @@ void dac_priv_init(void) {
 #endif
   __HAL_I2S_ENABLE(&hi2s2);
 #endif
+  __HAL_SAI_DISABLE(&hsai_BlockA1);
+  __HAL_SAI_DISABLE(&hsai_BlockA2);
+  __HAL_SAI_DISABLE(&hsai_BlockB1);
+  __HAL_SAI_DISABLE(&hsai_BlockB2);
+
+
+  // trick, fill the fifo to keep the SAI synced with LR clk
+  while ((hsai_BlockA1.Instance->SR & SAI_xSR_FLVL) != SAI_FIFOSTATUS_FULL) {
+    hsai_BlockA1.Instance->DR = 0;
+  }
+  while ((hsai_BlockA2.Instance->SR & SAI_xSR_FLVL) != SAI_FIFOSTATUS_FULL) {
+    hsai_BlockA2.Instance->DR = 0;
+  }
+
 
   hsai_BlockA1.State = HAL_SAI_STATE_READY;
   HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t *)tx_dma_buffer_[0], 4 * BLOCK_SIZE);
@@ -587,13 +599,6 @@ int16_t dac_buf_out[BLOCK_SIZE * kNumOutputs];
 
 void dac_fill_buffer(uint16_t buffer) {
 #if WITH_DAC_WM8731_TWIN
-  int16_t *sp = (int16_t *)&rx_dma_buffer_[(buffer ^ 1) * BLOCK_SIZE * kNumOutputs];
-  int16_t *dp = (int16_t *)&tx_dma_buffer_[(buffer ^ 0) * BLOCK_SIZE * kNumOutputs];
-  for (size_t i = 0; i < BLOCK_SIZE * 2; ++i) {
-    dac_buf_in[i] = sp[i];
-    dp[i]         = dac_buf_out[i];
-  }
-#else
   int16_t *sp0 = (int16_t *)&rx_dma_buffer_[0][(buffer ^ 1) * BLOCK_SIZE * 2];
   int16_t *dp0 = (int16_t *)&tx_dma_buffer_[0][(buffer ^ 0) * BLOCK_SIZE * 2];
   int16_t *sp1 = (int16_t *)&rx_dma_buffer_[1][(buffer ^ 1) * BLOCK_SIZE * 2];
@@ -612,6 +617,13 @@ void dac_fill_buffer(uint16_t buffer) {
     dac_buf_in[px] = *sp1++;
     *dp1++         = dac_buf_out[px];
     px++;
+  }
+#else
+  int16_t *sp = (int16_t *)&rx_dma_buffer_[(buffer ^ 1) * BLOCK_SIZE * kNumOutputs];
+  int16_t *dp = (int16_t *)&tx_dma_buffer_[(buffer ^ 0) * BLOCK_SIZE * kNumOutputs];
+  for (size_t i = 0; i < BLOCK_SIZE * 2; ++i) {
+    dac_buf_in[i] = sp[i];
+    dp[i]         = dac_buf_out[i];
   }
 #endif
   // SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk
