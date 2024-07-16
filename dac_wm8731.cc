@@ -11,6 +11,7 @@ DMA_HandleTypeDef hdma_spi2_rx;
 
 #undef kNumOutputs
 #define kNumOutputs (4)
+#define WM8731_HIGHPASS
 
 #if WITH_DAC_WM8731_TWIN
 DMA_BUFFER uint16_t rx_dma_buffer_[2][BLOCK_SIZE * 2 * 2 * 2];
@@ -104,7 +105,7 @@ void wm8731_init(void) {
   wm8731_write_reg(WM8731_REG_RESET, 0b000000000); // Reset!
   wm8731_set_in_volume(0);
   wm_8731_set_out_volume(-10);
-  wm8731_write_reg(WM8731_REG_ANALOG, 0b000010010); // Analog path - select DAC, no bypass
+  wm8731_write_reg(WM8731_REG_ANALOG, 0b00010010); // Analog path - select DAC, no bypass
 #ifdef WM8731_HIGHPASS
   wm8731_write_reg(WM8731_REG_DIGITAL, 0b000000000); // Digital path - disable soft mute
 #else
@@ -575,7 +576,6 @@ void dac_priv_init(void) {
   __HAL_SAI_DISABLE(&hsai_BlockB1);
   __HAL_SAI_DISABLE(&hsai_BlockB2);
 
-
   // trick, fill the fifo to keep the SAI synced with LR clk
   while ((hsai_BlockA1.Instance->SR & SAI_xSR_FLVL) != SAI_FIFOSTATUS_FULL) {
     hsai_BlockA1.Instance->DR = 0;
@@ -583,7 +583,6 @@ void dac_priv_init(void) {
   while ((hsai_BlockA2.Instance->SR & SAI_xSR_FLVL) != SAI_FIFOSTATUS_FULL) {
     hsai_BlockA2.Instance->DR = 0;
   }
-
 
   hsai_BlockA1.State = HAL_SAI_STATE_READY;
   HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t *)tx_dma_buffer_[0], 4 * BLOCK_SIZE);
@@ -599,12 +598,19 @@ int16_t dac_buf_out[BLOCK_SIZE * kNumOutputs];
 
 void dac_fill_buffer(uint16_t buffer) {
 #if WITH_DAC_WM8731_TWIN
-  int16_t *sp0 = (int16_t *)&rx_dma_buffer_[0][(buffer ^ 1) * BLOCK_SIZE * 2];
+  int16_t *sp0 = (int16_t *)&rx_dma_buffer_[0][(buffer ^ 0) * BLOCK_SIZE * 2];
   int16_t *dp0 = (int16_t *)&tx_dma_buffer_[0][(buffer ^ 0) * BLOCK_SIZE * 2];
-  int16_t *sp1 = (int16_t *)&rx_dma_buffer_[1][(buffer ^ 1) * BLOCK_SIZE * 2];
+
+  int16_t *sp1 = (int16_t *)&rx_dma_buffer_[1][(buffer ^ 0) * BLOCK_SIZE * 2];
   int16_t *dp1 = (int16_t *)&tx_dma_buffer_[1][(buffer ^ 0) * BLOCK_SIZE * 2];
   int      px  = 0;
   for (size_t i = 0; i < BLOCK_SIZE; ++i) {
+#if 0
+    *dp0++ = *sp0++;
+    *dp0++ = *sp0++;
+    *dp1++ = *sp1++;
+    *dp1++ = *sp1++;
+#else
     dac_buf_in[px] = *sp0++;
     *dp0++         = dac_buf_out[px];
     px++;
@@ -617,6 +623,7 @@ void dac_fill_buffer(uint16_t buffer) {
     dac_buf_in[px] = *sp1++;
     *dp1++         = dac_buf_out[px];
     px++;
+#endif
   }
 #else
   int16_t *sp = (int16_t *)&rx_dma_buffer_[(buffer ^ 1) * BLOCK_SIZE * kNumOutputs];
