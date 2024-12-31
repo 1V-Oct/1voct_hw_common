@@ -3,7 +3,7 @@
 #include "gpio.h"
 #include "vo_logger.h"
 #include "vo_string.h"
-
+#include "uart_io.h"
 static const uint8_t _addr_len = 3;
 static uint8_t       _cmd_read = SFLASH_CMD_READ;
 
