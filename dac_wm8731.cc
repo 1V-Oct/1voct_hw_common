@@ -3,6 +3,7 @@
 #include "vo_common.h"
 #include "vo_logger.h"
 #include "vo_string.h"
+#include "vo_math.h"
 
 extern I2C_HandleTypeDef hi2c2;
 
