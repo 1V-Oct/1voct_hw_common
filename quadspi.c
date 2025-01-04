@@ -1,6 +1,8 @@
 #include "quadspi.h"
 #include "vo_logger.h"
 
+#define WITH_QSPI_DEBUG (0)
+
 static uint8_t QSPI_WriteEnable(void);
 uint8_t        QSPI_AutoPollingMemReady(void);
 static uint8_t QSPI_Configuration(void);
@@ -421,16 +423,27 @@ uint8_t CSP_QSPI_EraseSector(uint32_t EraseStartAddress) {
 }
 
 int32_t qspi_read_memory(uint32_t addr, void *data, uint32_t len) {
+  uint32_t error = 0;
   if (CSP_QSPI_Read(data, addr, len) == HAL_OK)
-    return len;
-  else
-    return 0;
+    error = len;
+#if WITH_QSPI_DEBUG
+  else {
+    LOGE("QSPI Read Error");
+  }
+#endif
+
+  return error;
 }
 int32_t qspi_write_memory(uint32_t addr, void *data, uint32_t len) {
+  uint32_t error = 0;
   if (CSP_QSPI_WriteMemory(data, addr, len) == HAL_OK)
-    return len;
-  else
-    return 0;
+    error = len;
+#if WITH_QSPI_DEBUG
+  else {
+    LOGE("QSPI Write Error");
+  }
+#endif
+  return len;
 }
 
 uint8_t CSP_QSPI_EraseSectors(uint32_t EraseStartAddress,
