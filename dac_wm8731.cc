@@ -2,8 +2,10 @@
 #include "app_config.h"
 #include "vo_common.h"
 #include "vo_logger.h"
-#include "vo_string.h"
 #include "vo_math.h"
+#include "vo_string.h"
+
+#include "es8388_defs.h"
 
 extern I2C_HandleTypeDef hi2c2;
 
@@ -21,6 +23,9 @@ DMA_BUFFER uint16_t tx_dma_buffer_[2][BLOCK_SIZE * 2 * 2 * 2];
 DMA_BUFFER uint16_t rx_dma_buffer_[BLOCK_SIZE * 2 * 2 * 2];
 DMA_BUFFER uint16_t tx_dma_buffer_[BLOCK_SIZE * 2 * 2 * 2];
 #endif
+
+#if WITH_DAC_WM8731
+
 #define WM8731_I2C_ADDR      0x34
 
 #define WM8731_REG_LLINEIN   0
@@ -36,6 +41,16 @@ DMA_BUFFER uint16_t tx_dma_buffer_[BLOCK_SIZE * 2 * 2 * 2];
 #define WM8731_REG_RESET     15
 
 #define WM8731_ADDR          (0x1A << 1)
+
+#define CODEC_I2C_ADDR WM8731_ADDR
+#elif WITH_DAC_ES8388
+
+#define ES8388_ADDR          (0x20)
+
+#define CODEC_I2C_ADDR ES8388_ADDR
+#else
+#error Undefined DAC
+#endif
 
 #if WITH_DAC_WM8731_SAI
 
@@ -58,13 +73,27 @@ static void wm8731_write_reg(uint8_t reg, uint16_t value) {
   data[0] = (tmp & 0xFF00) >> 8;
   data[1] = tmp & 0x00FF;
 
-  HAL_I2C_Master_Transmit(&hi2c2, WM8731_ADDR, data, 2, HAL_MAX_DELAY);
+  HAL_I2C_Master_Transmit(&hi2c2, CODEC_I2C_ADDR, data, 2, HAL_MAX_DELAY);
 #if WITH_DAC_WM8731_TWIN
-  HAL_I2C_Master_Transmit(&hi2c2, WM8731_ADDR + 2, data, 2, HAL_MAX_DELAY);
+  HAL_I2C_Master_Transmit(&hi2c2, CODEC_I2C_ADDR + 2, data, 2, HAL_MAX_DELAY);
 #endif
 }
 
-#if 1
+static int8_t es_write_reg(uint8_t reg, uint8_t val) {
+  uint16_t tmp = 0;
+  uint8_t  data[2];
+
+  data[0] = reg;
+  data[1] = val;
+
+  HAL_I2C_Master_Transmit(&hi2c2, CODEC_I2C_ADDR, data, 2, HAL_MAX_DELAY);
+  return 1;
+#if WITH_DAC_WM8731_TWIN
+  HAL_I2C_Master_Transmit(&hi2c2, CODEC_I2C_ADDR + 2, data, 2, HAL_MAX_DELAY);
+#endif
+}
+
+#if 0
 // #define AUDIO_BUFFER_SIZE 2560
 #define AUDIO_BUFFER_SIZE 1280
 DMA_BUFFER static int16_t audio_data[4 * AUDIO_BUFFER_SIZE];
@@ -88,6 +117,8 @@ static void     fill_audio_buffer(void) {
 }
 
 #endif
+
+#if WITH_DAC_WM8731
 
 void wm8731_set_in_volume(int vol) {
   // -23 <= vol <= 8
@@ -133,6 +164,57 @@ void wm8731_init(void) {
   //   // LOGI("#");
   // }
 }
+#endif
+
+#if WITH_DAC_ES8388
+void es8388_init(void) {
+  int res = 0;
+
+  res |= es_write_reg(ES8388_DACCONTROL3, 0x04); // 0x04 mute/0x00 unmute&ramp;DAC unmute and  disabled digital volume control soft ramp
+
+  res |= es_write_reg(ES8388_CONTROL2, 0x50);
+  res |= es_write_reg(ES8388_CHIPPOWER, 0x00);           // normal all and power up all
+  res |= es_write_reg(ES8388_MASTERMODE, ES_MODE_SLAVE); // CODEC IN I2S SLAVE MODE
+
+  res |= es_write_reg(ES8388_DACPOWER, 0xC0); // disable DAC and disable Lout/Rout/1/2
+  res |= es_write_reg(ES8388_CONTROL1, 0x12); // Enfr=0,Play&Record Mode,(0x17-both of mic&paly)
+
+  res |= es_write_reg(ES8388_DACCONTROL1, 0x18);  // 1a 0x18:16bit iis , 0x00:24
+  res |= es_write_reg(ES8388_DACCONTROL2, 0x02);  // DACFsMode,SINGLE SPEED; DACFsRatio,256
+  res |= es_write_reg(ES8388_DACCONTROL16, 0x00); // 0x00 audio on LIN1&RIN1,  0x09 LIN2&RIN2
+  res |= es_write_reg(ES8388_DACCONTROL17, 0x90); // only left DAC to left mixer enable 0db
+  res |= es_write_reg(ES8388_DACCONTROL20, 0x90); // only right DAC to right mixer enable 0db
+  res |= es_write_reg(ES8388_DACCONTROL21, 0x80); // set internal ADC and DAC use the same LRCK clock, ADC LRCK as internal LRCK
+  res |= es_write_reg(ES8388_DACCONTROL23, 0x00); // vroi=0
+
+  res |= es_write_reg(ES8388_DACCONTROL4, 0x00); // 0dB LDAC
+  res |= es_write_reg(ES8388_DACCONTROL5, 0x00); // 0dB RDAC
+  res |= es_write_reg(ES8388_DACCONTROL3, 0x00); // 0dB RDAC
+
+  res |= es_write_reg(ES8388_DACCONTROL24, 0x1e);
+  res |= es_write_reg(ES8388_DACCONTROL25, 0x1e);
+  res |= es_write_reg(ES8388_DACCONTROL26, 0x0);
+  res |= es_write_reg(ES8388_DACCONTROL27, 0x0);
+
+  // res |= set_adc_dac_volume(ES_MODULE_DAC, 0, 0);          // 0db
+
+  res |= es_write_reg(ES8388_DACPOWER, 0x3c); // power up DAC and line out
+  res |= es_write_reg(ES8388_ADCPOWER, 0xFF);
+  res |= es_write_reg(ES8388_ADCCONTROL1, 0x11); // MIC Left and Right channel PGA gain
+
+  uint8_t input = 0;
+  res |= es_write_reg(ES8388_ADCCONTROL2, input);
+
+  res |= es_write_reg(ES8388_ADCCONTROL3, 0x02);
+  res |= es_write_reg(ES8388_ADCCONTROL4, 0x0d); // Left/Right data, Left/Right justified mode, Bits length, I2S format
+  res |= es_write_reg(ES8388_ADCCONTROL5, 0x02); // ADCFsMode,singel SPEED,RATIO=256
+  // ALC for Microphone
+  //  res |= set_adc_dac_volume(ES_MODULE_ADC, 0, 0);      // 0db
+  res |= es_write_reg(ES8388_ADCPOWER, 0x09); // Power on ADC, Enable LIN&RIN, Power off MICBIAS, set int1lp to low power mode
+
+  // return res;
+}
+#endif
 
 #if WITH_DAC_WM8731_I2S
 /**
@@ -533,7 +615,14 @@ void dac_priv_init(void) {
   __HAL_SAI_DISABLE(&hsai_BlockA2);
   __HAL_SAI_DISABLE(&hsai_BlockB1);
   __HAL_SAI_DISABLE(&hsai_BlockB2);
+
+#if WITH_DAC_WM8731
   wm8731_init();
+#elif WITH_DAC_ES8388
+  es8388_init();
+#else
+#error Undefined DAC
+#endif
 
   // hsai_BlockA1.State = HAL_SAI_STATE_READY;
   // HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t *)audio_data, 2 * AUDIO_BUFFER_SIZE);
