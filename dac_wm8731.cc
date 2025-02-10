@@ -87,10 +87,10 @@ static int8_t es_write_reg(uint8_t reg, uint8_t val) {
   data[1] = val;
 
   HAL_I2C_Master_Transmit(&hi2c2, CODEC_I2C_ADDR, data, 2, HAL_MAX_DELAY);
-  return 1;
 #if WITH_DAC_WM8731_TWIN
   HAL_I2C_Master_Transmit(&hi2c2, CODEC_I2C_ADDR + 2, data, 2, HAL_MAX_DELAY);
 #endif
+  return 1;
 }
 
 #if 0
@@ -200,14 +200,19 @@ void es8388_init(void) {
 
   res |= es_write_reg(ES8388_DACPOWER, 0x3c); // power up DAC and line out
   res |= es_write_reg(ES8388_ADCPOWER, 0xFF);
+  
   res |= es_write_reg(ES8388_ADCCONTROL1, 0x11); // MIC Left and Right channel PGA gain
+  // res |= es_write_reg(ES8388_ADCCONTROL1, 0x44); // MIC Left and Right channel PGA gain
 
-  uint8_t input = 0;
+  uint8_t input = 0b00000000;
   res |= es_write_reg(ES8388_ADCCONTROL2, input);
 
   res |= es_write_reg(ES8388_ADCCONTROL3, 0x02);
-  res |= es_write_reg(ES8388_ADCCONTROL4, 0x0d); // Left/Right data, Left/Right justified mode, Bits length, I2S format
+  // res |= es_write_reg(ES8388_ADCCONTROL4, 0x0d); // Left/Right data, Left/Right justified mode, Bits length, I2S format
+  res |= es_write_reg(ES8388_ADCCONTROL4, 0b00001100); // Left/Right data, Left/Right justified mode, Bits length, I2S format
   res |= es_write_reg(ES8388_ADCCONTROL5, 0x02); // ADCFsMode,singel SPEED,RATIO=256
+  res |= es_write_reg(ES8388_ADCCONTROL9, 0x10); // ADCFsMode,singel SPEED,RATIO=256
+  res |= es_write_reg(ES8388_ADCCONTROL8, 0x10); // ADCFsMode,singel SPEED,RATIO=256
   // ALC for Microphone
   //  res |= set_adc_dac_volume(ES_MODULE_ADC, 0, 0);      // 0db
   res |= es_write_reg(ES8388_ADCPOWER, 0x09); // Power on ADC, Enable LIN&RIN, Power off MICBIAS, set int1lp to low power mode
