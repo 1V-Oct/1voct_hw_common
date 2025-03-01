@@ -16,5 +16,11 @@ void uart_it(uint8_t id);
 void uart_send(uint8_t id, uint8_t *buf, uint8_t len);
 
 
+#define VO_UART_PARITY_EVEN (0x80000000)
+
+#define VO_UART_BAUD_RATE_921K         921600
+#define VO_UART_BAUD_RATE_460K         460800
+#define VO_UART_BAUD_RATE_115K         115200
+
 __CEXTERN_END
 
