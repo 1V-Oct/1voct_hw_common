@@ -1,4 +1,5 @@
 #include "backlight_control.h"
+#if WITH_BACKLIGHT_CONTROL
 #include "swenc.h"
 #include "sys_settings.h"
 #include "vo_logger.h"
@@ -374,6 +375,8 @@ static void MX_TIM4_Init(void)
   HAL_TIM_MspPostInit(&htim4);
 
 }
+#endif
+
 #endif
 
 #endif
