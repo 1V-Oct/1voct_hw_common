@@ -272,6 +272,54 @@ uint8_t QSPI_Configuration(void) {
   uint8_t             reg;
   HAL_StatusTypeDef   ret;
 
+#if 0
+
+  /* Read Volatile Configuration register 1 --------------------------- */
+  sCommand.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
+  sCommand.Instruction       = READ_STATUS_REG_CMD;
+  sCommand.AddressMode       = QSPI_ADDRESS_NONE;
+  sCommand.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
+  sCommand.DataMode          = QSPI_DATA_1_LINE;
+  sCommand.DummyCycles       = 0;
+  sCommand.DdrMode           = QSPI_DDR_MODE_DISABLE;
+  sCommand.DdrHoldHalfCycle  = QSPI_DDR_HHC_ANALOG_DELAY;
+  sCommand.SIOOMode          = QSPI_SIOO_INST_EVERY_CMD;
+  sCommand.NbData            = 1;
+
+  if ((ret = HAL_QSPI_Command(&hqspi, &sCommand,
+                              HAL_QPSI_TIMEOUT_DEFAULT_VALUE)) != HAL_OK) {
+    return ret;
+  }
+
+  if ((ret = HAL_QSPI_Receive(&hqspi, &reg, HAL_QPSI_TIMEOUT_DEFAULT_VALUE)) != HAL_OK) {
+    return ret;
+  }
+  LOGI("REG1: %02x", reg);
+
+  /* Enable Volatile Write operations ---------------------------------------- */
+  sCommand.DataMode    = QSPI_DATA_NONE;
+  sCommand.Instruction = VOLATILE_SR_WRITE_ENABLE;
+
+  if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+    return ret;
+  }
+
+  // /* Write Volatile Configuration register 2 (QE = 1) -- */
+  // sCommand.DataMode    = QSPI_DATA_1_LINE;
+  // sCommand.Instruction = WRITE_STATUS_REG2_CMD;
+  // LOGI("REG2: %02x", reg);
+  // reg |= 2; // QE bit
+
+  // if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+  //   return ret;
+  // }
+
+  // if (HAL_QSPI_Transmit(&hqspi, &reg, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+  //   return ret;
+  // }
+
+#endif
+
   /* Read Volatile Configuration register 2 --------------------------- */
   sCommand.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
   sCommand.Instruction       = READ_STATUS_REG2_CMD;
@@ -304,7 +352,9 @@ uint8_t QSPI_Configuration(void) {
   /* Write Volatile Configuration register 2 (QE = 1) -- */
   sCommand.DataMode    = QSPI_DATA_1_LINE;
   sCommand.Instruction = WRITE_STATUS_REG2_CMD;
-  reg |= 2; // QE bit
+  LOGI("REG2: %02x", reg);
+  reg &= ~0x40; // clear CMP bit
+  reg |= 2;     // QE bit
 
   if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
     return ret;
@@ -337,6 +387,7 @@ uint8_t QSPI_Configuration(void) {
 
   /* Write Volatile Configuration register 2 (DRV1:2 = 00) -- */
   sCommand.Instruction = WRITE_STATUS_REG3_CMD;
+  LOGI("REG3: %02x", reg);
   reg &= 0x9f; // DRV1:2 bit
 
   if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
