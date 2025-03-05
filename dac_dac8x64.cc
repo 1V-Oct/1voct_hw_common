@@ -37,7 +37,7 @@ void HAL_I2S_MspInitXXX(I2S_HandleTypeDef* hi2s) {
     */
 #if BOARD_VER == 3
     GPIO_InitStruct.Pin = GPIO_PIN_10 | GPIO_PIN_12 | GPIO_PIN_15;
-#elif BOARD_VER == 4
+#elif (BOARD_VER == 4) || (BOARD_VER == 5)
     GPIO_InitStruct.Pin = GPIO_PIN_13 | GPIO_PIN_12 | GPIO_PIN_15;
 #else
 #error Unknown board version
