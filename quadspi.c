@@ -1,4 +1,5 @@
 #include "quadspi.h"
+#include "vo_chunk.h"
 #include "vo_logger.h"
 
 #define WITH_QSPI_DEBUG (0)
@@ -760,4 +761,57 @@ uint8_t CSP_QSPI_Read(void *pData, uint32_t ReadAddr, uint32_t Size) {
 
   return HAL_OK;
 }
-/* USER CODE END 1 */
+
+/**
+ * @brief Initialises QSPI flash
+ *
+ * @return int  0 if FLASH already initialised
+ *              1 if the routine erased and initialised flash
+ *             -1 if initialisation failed
+ */
+int qspi_init_flash(void) {
+  LOGI("QSPI Init");
+  const uint32_t voct_chunk = MAKE_CHUNK_ID('V', 'O', 'C', 'T');
+  uint32_t       cid        = 0;
+
+  if (CSP_QUADSPI_Init() != HAL_OK)
+    LOGE("QSPI Init fail");
+
+  // LOGI("Erase");
+  // if (CSP_QSPI_Erase_Chip() != HAL_OK)
+  //   LOGE("QSPI Erase FAIL");
+  // if (CSP_QSPI_EraseBlock(0) != HAL_OK)
+  //   LOGE("QSPI Erase FAIL");
+  // if (CSP_QSPI_EraseSector(0) != HAL_OK)
+  //   LOGE("QSPI Erase FAIL");
+  // LOGI("Erase Completed");
+
+  LOGI("Read");
+  if (CSP_QSPI_Read(&cid, 0, 4) != HAL_OK) {
+    LOGE("QSPI Read Fail");
+  } else {
+    LOGI("CID: %C", cid);
+  }
+
+  if (CSP_QSPI_WriteMemory(&voct_chunk, 4, 4) != HAL_OK)
+    LOGE("QSPI Write FAIL");
+
+  if (cid == voct_chunk) {
+    LOGI("FLASH INITIALISED");
+    return 0;
+  } else {
+    LOGW("FLASH NOT INITIALISED");
+    LOGI("Erase");
+    if (CSP_QSPI_Erase_Chip() != HAL_OK) {
+      LOGE("QSPI Erase FAIL");
+      return -1;
+    }
+    // LOGI("Erase Completed");
+    LOGI("Write");
+    if (CSP_QSPI_WriteMemory(&voct_chunk, 0, 4) != HAL_OK) {
+      LOGE("QSPI Write FAIL");
+      return -1;
+    }
+  }
+  return 1;
+}

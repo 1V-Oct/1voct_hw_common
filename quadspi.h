@@ -61,6 +61,9 @@ void MX_QUADSPI_Init(void);
 int32_t qspi_read_memory(uint32_t addr, void *data, uint32_t len);
 int32_t qspi_write_memory(uint32_t addr, void *data, uint32_t len);
 
+int qspi_init_flash(void);
+
+
 #ifdef __cplusplus
 }
 #endif
