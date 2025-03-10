@@ -262,3 +262,26 @@ int uart_printf(const char *fmt, ...) {
 
   return uart_puts(buf) - buf;
 }
+
+const char *uart_fputs(const uint8_t port, const char *buf) {
+  const char *p = buf;
+  
+  if (buf == NULL)
+  p = null_str;
+  char c;
+  while ((c = *p++) != 0) {
+    uart_tx(port, c);
+  };
+  return p;
+}
+
+int uart_fprintf(const uint8_t port, const char *fmt, ...) {
+  char              buf[400];
+  __builtin_va_list args;
+
+  va_start(args, fmt);
+  vo_vsprintf(buf, fmt, args);
+  va_end(args);
+
+  return uart_fputs(port, buf) - buf;
+}

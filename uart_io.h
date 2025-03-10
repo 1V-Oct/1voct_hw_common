@@ -14,6 +14,9 @@ int         uart_printf(const char *fmt, ...);
 void        uart_it(uint8_t id);
 void        uart_send(uint8_t id, uint8_t *buf, uint8_t len);
 
+const char *uart_fputs(const uint8_t port, const char *buf);
+int         uart_fprintf(const uint8_t port, const char *fmt, ...);
+
 #define VO_UART_PARITY_EVEN    (0x80000000)
 
 #define VO_UART_BAUD_RATE_921K 921600
