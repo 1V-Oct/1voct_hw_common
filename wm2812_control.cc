@@ -1,6 +1,6 @@
 #include "wm2812_control.h"
 
-// #if WITH_WM2812_CONTROL
+#if WITH_WM2812_CONTROL
 #include "swenc.h"
 #include "vo_global_timer.h"
 #include "vo_logger.h"
@@ -1450,3 +1450,5 @@ CEXTERN void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim_base) {
   }
   LOGI("UHU");
 }
+
+#endif // WITH_WM2812_CONTROL
