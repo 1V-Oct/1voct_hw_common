@@ -1,6 +1,7 @@
 #pragma once
 #include "app_config.h"
 
+#if WITH_NOR_FLASH
 #ifdef __cplusplus
  extern "C" {
 #endif
@@ -432,4 +433,6 @@ void nor_erase_sector(uint32_t addr);
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif

@@ -1,5 +1,6 @@
 #include "../board.h"
 #include "app_config.h"
+#include "app.h"
 #include "vo_common.h"
 #include "vo_logger.h"
 #include "vo_math.h"

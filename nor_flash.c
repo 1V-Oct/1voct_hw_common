@@ -1,5 +1,8 @@
 //#pragma GCC optimize("Os")
 #include "nor_flash.h"
+#if WITH_NOR_FLASH
+#include "board_defs.h"
+#include "nor_flash.h"
 #include "gpio.h"
 #include "vo_logger.h"
 #include "vo_string.h"
@@ -233,3 +236,5 @@ uint8_t nor_init(void) {
 #endif
   return 1;
 }
+
+#endif

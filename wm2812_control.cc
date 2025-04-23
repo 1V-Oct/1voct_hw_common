@@ -1,6 +1,7 @@
 #include "wm2812_control.h"
 
 #if WITH_WM2812_CONTROL
+#include "app.h"
 #include "swenc.h"
 #include "vo_global_timer.h"
 #include "vo_logger.h"
