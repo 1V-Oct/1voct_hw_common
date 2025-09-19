@@ -210,7 +210,7 @@ void es8388_init(void) {
 
   res |= es_write_reg(ES8388_ADCCONTROL3, 0x02);
   // res |= es_write_reg(ES8388_ADCCONTROL4, 0x0d); // Left/Right data, Left/Right justified mode, Bits length, I2S format
-  res |= es_write_reg(ES8388_ADCCONTROL4, 0b00001100); // Left/Right data, Left/Right justified mode, Bits length, I2S format
+  res |= es_write_reg(ES8388_ADCCONTROL4, 0b11001100); // Left/Right data, Left/Right justified mode, Bits length, I2S format
   res |= es_write_reg(ES8388_ADCCONTROL5, 0x02); // ADCFsMode,singel SPEED,RATIO=256
   res |= es_write_reg(ES8388_ADCCONTROL9, 0x10); // ADCFsMode,singel SPEED,RATIO=256
   res |= es_write_reg(ES8388_ADCCONTROL8, 0x10); // ADCFsMode,singel SPEED,RATIO=256
