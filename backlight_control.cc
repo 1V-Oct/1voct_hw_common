@@ -4,7 +4,7 @@
 #include "sys_settings.h"
 #include "vo_logger.h"
 
-#define BLC_DEBUG (1)
+#define BLC_DEBUG (0)
 
 TIM_HandleTypeDef htim4;
 
