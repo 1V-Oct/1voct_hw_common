@@ -1,5 +1,5 @@
 #include "backlight_control.h"
-#if WITH_BACKLIGHT_CONTROL
+#if WITH_LCD_BACKLIGHT_CONTROL
 #include "swenc.h"
 #include "sys_settings.h"
 #include "vo_logger.h"
