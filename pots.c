@@ -1,18 +1,21 @@
 #include "pots.h"
-
+#include "adc_pots.h"
 
 ADC_POTS_VALUES;
 
 void pots_init(void) {
-// #if WITH_ADC_POTS
-  // adc_pots_init();
+#if (TARGET_MCU == MCU_TYPE_STM32)
+#if WITH_ADC_POTS
+  adc_pots_init();
 
-  // int      i;
-  // uint16_t flags;
-  // for (i = 0; i < NUM_POTS; i++) {
-  //   flags             = ADC_POT_FLAGS_MASK_LONG;
-  //   adc_pots.flags[i] = flags;
-  // }
+  int      i;
+  uint16_t flags;
+  for (i = 0; i < NUM_POTS; i++) {
+    flags             = ADC_POT_FLAGS_MASK_LONG;
+    adc_pots.flags[i] = flags;
+  }
+#endif
+#endif
 }
 
 void pots_reset_val(void) {
