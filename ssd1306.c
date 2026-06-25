@@ -1,6 +1,8 @@
 
 #include "ssd1306.h"
 
+#if WITH_SSD1306
+
 #if BUILD_AVR
 #include <avr/pgmspace.h>
 #include <util/delay.h>
@@ -454,3 +456,4 @@ void ssd1306_setTextSize(uint8_t size, uint8_t spacing) {
 //------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
+#endif // WITH_SSD1306

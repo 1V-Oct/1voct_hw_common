@@ -1,11 +1,9 @@
 #pragma once
 #include "app_config.h"
 
-#if WITH_NOR_FLASH
-#ifdef __cplusplus
- extern "C" {
-#endif
+#if WITH_NOR_FLASH || WITH_NOR_FLASH_EMU
 
+__CEXTERN_START
 
 enum {
   SFLASH_CMD_READ = 0x03,      // Single Read
@@ -431,8 +429,7 @@ int32_t nor_read_memory(uint32_t addr, void *data, uint32_t len);
 int32_t nor_write_memory(uint32_t addr, void *data, uint32_t len);
 void nor_erase_sector(uint32_t addr);
 
-#ifdef __cplusplus
-}
-#endif
+__CEXTERN_END
+
 
 #endif

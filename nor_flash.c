@@ -1,5 +1,6 @@
 //#pragma GCC optimize("Os")
 #include "nor_flash.h"
+
 #if WITH_NOR_FLASH
 #include "board_defs.h"
 #include "nor_flash.h"

@@ -1,7 +1,9 @@
 #pragma once
+#include "app_config.h"
+
 
 typedef struct {
-  GPIO_TypeDef *port;
+  port_t *port;
   uint16_t      pin;
 } sw_pin_t;
 

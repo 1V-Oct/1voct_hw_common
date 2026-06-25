@@ -19,8 +19,7 @@ extern SW_STATE extern ENC_STATE
 
   __CEXTERN_START
 
-  void
-        sw_init(void);
+  void  sw_init(void);
 void    sw_scan(void);
 void    sw_scan_btn(void);
 uint8_t sw_get_raw(uint8_t sw);
