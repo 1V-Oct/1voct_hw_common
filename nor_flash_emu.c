@@ -10,7 +10,7 @@
 #include "vo_logger.h"
 #include "vo_memory.h"
 
-#define NOR_FLASH_IMAGE_PATH "nor_flash.img"
+#define NOR_FLASH_IMAGE_PATH "app_data/the_centre/images/nor_flash.img"
 
 // Using GD25Q64C as a reference from nor_flash.h, which is 8MiB.
 #define NOR_FLASH_SIZE (1 << 23)
